@@ -1,72 +1,75 @@
-# Bitcoin Market Sentiment vs Trader Performance Analysis
-
-> Exploring the relationship between the Fear & Greed Index and Hyperliquid trader behavior across 211,000+ trades.
-
----
-
-
+# Crypto Trader Sentiment Analysis
+### Do traders perform better during Fear or Greed?
 
 ---
 
-## 📊 Datasets
+## Overview
 
-### 1. Bitcoin Fear & Greed Index
-| Column | Description |
-|---|---|
-| `date` | Date of sentiment reading |
-| `value` | Numeric score (0–100) |
-| `classification` | Extreme Fear / Fear / Neutral / Greed / Extreme Greed |
-
-### 2. Hyperliquid Historical Trader Data
-| Column | Description |
-|---|---|
-| `Account` | Trader wallet address |
-| `Coin` | Traded asset (246 unique coins) |
-| `Execution Price` | Price at trade execution |
-| `Size Tokens / Size USD` | Trade size |
-| `Side` | BUY or SELL |
-| `Direction` | Open Long, Close Long, Open Short, Close Short, etc. |
-| `Timestamp IST` | Trade timestamp (IST timezone) |
-| `Closed PnL` | Realized profit/loss (non-zero on closing trades) |
-| `Fee` | Trading fee paid |
+This project analyses **211,224 on-chain trades** from **32 traders** over a 2-year period (May 2023 – May 2025), cross-referenced with the daily **Fear & Greed Index** to measure how market sentiment influences trading behaviour and profitability.
 
 ---
 
-## 🔍 Notebook Walkthrough
+## Datasets
 
-| Cell | Title | What it does |
+| File | Rows | Description |
 |---|---|---|
-| 1 | Imports | Loads all libraries |
-| 2 | Load Data | Reads both CSVs |
-| 3 | Clean Trades | Parses dates, coerces numerics, handles nulls |
-| 4 | Clean Fear/Greed | Normalizes dates, creates ordered category |
-| 5 | Merge | Joins on date; 211,218 / 211,224 rows matched |
-| 6 | Volume by Sentiment | Boxplots of daily trade count and USD volume |
-| 7 | PnL Distributions | KDE curves per sentiment class (clipped ±500 USD) |
-| 8 | Win Rate | % profitable closing trades by sentiment |
-| 9 | Mean vs Median PnL | Grouped bar chart per sentiment |
-| 10 | Long/Short Bias | % long-side trades by sentiment |
-| 11 | Trader Correlation | Per-trader Pearson r between daily PnL and F&G value |
-| 12 | Sentiment × Side Heatmap | Avg PnL across sentiment and trade direction |
-| 13 | Time-Series Overlay | Rolling 7-day PnL vs F&G index over time |
-| 14 | ANOVA Test | Tests whether sentiment significantly affects PnL |
-| 15 | Summary Table | Win rate, mean/median PnL, total PnL per sentiment class |
+| `historical_data.csv` | 211,224 | On-chain trade records (price, size, PnL, side, timestamp) |
+| `fear_greed_index.csv` | 2,644 | Daily Fear & Greed value + classification |
 
 ---
 
-## 💡 Key Findings
+## What the Analysis Covers
 
-- **Extreme Greed** produces the highest mean PnL per closing trade (~$130), followed by **Fear** (~$113)
-- **Win rates** are highest during **Fear** and **Extreme Greed** periods; lowest during **Neutral**
-- Traders open **68.8% long** during Extreme Fear but only **42.3% long** during Greed — a classic contrarian pattern
-- **Close Short** win rate drops sharply during Greed (68.9%) compared to Fear (86.2%), suggesting shorting is riskier in bull sentiment
-- One-way ANOVA confirms sentiment class has a **statistically significant effect** on per-trade PnL
+**Cell 6 — Trade Activity by Sentiment**
+Daily trade count and USD volume broken down by sentiment class (boxplots).
+
+**Cell 7 — PnL Distribution**
+KDE curves of closed PnL per sentiment class, clipped to ±500 USD to reduce outlier distortion.
+
+**Cell 8 — Win Rate by Sentiment**
+Percentage of profitable closing trades per sentiment class with trade counts.
+
+**Cell 9 — Mean vs Median PnL**
+Compares average and median closed PnL per trade across sentiment classes.
+
+**Cell 10 — Long/Short Bias**
+Proportion of BUY vs SELL trades per sentiment class.
+
+**Cell 11 — Per-Trader Correlation**
+Pearson r between each trader's daily PnL and the Fear & Greed value (traders with ≥ 30 active days only).
+
+**Cell 12 — Heatmap**
+Average closed PnL broken down by sentiment × trade side (BUY/SELL).
+
+**Cell 13 — Time-Series Overlay**
+7-day rolling aggregate PnL plotted against the Fear & Greed index over the full 2-year window.
+
+**Cell 14 — ANOVA Test**
+One-way ANOVA testing whether sentiment class significantly affects per-trade PnL.
+
+**Cell 15 — Summary Table**
+Final consolidated stats per sentiment class.
 
 ---
 
-## ⚙️ Setup & Usage
+## Key Results
 
-### Requirements
+| Sentiment | Trades | Win Rate | Mean PnL | Total PnL |
+|---|---|---|---|---|
+| Extreme Fear | 10,406 | 76.2% | $71.03 | $739,110 |
+| Fear | 29,808 | 87.3% | $112.63 | $3,357,155 |
+| Neutral | 18,159 | 82.4% | $71.20 | $1,292,921 |
+| Greed | 25,176 | 76.9% | $85.40 | $2,150,129 |
+| Extreme Greed | 20,853 | 89.2% | $130.21 | $2,715,171 |
+
+**ANOVA result:** F = 7.738, p = 3.14e-06 — the difference in PnL across sentiment classes is statistically significant.
+
+**Correlation finding:** Mean Pearson r across qualified traders = 0.148, suggesting a weak positive relationship between higher Fear & Greed values and daily PnL.
+
+---
+
+## Requirements
+
 ```
 pandas
 numpy
@@ -75,29 +78,24 @@ seaborn
 scipy
 ```
 
-### Install
+Install with:
 ```bash
 pip install pandas numpy matplotlib seaborn scipy
 ```
 
-### Run
-```bash
-jupyter notebook analysis.ipynb
-```
+---
 
-Or open directly in **Google Colab** and upload both CSV files when prompted.
+## How to Run
+
+1. Place `historical_data.csv` and `fear_greed_index.csv` in your working directory
+2. Update the file paths in Cell 2
+3. Run all cells top to bottom
 
 ---
 
-## 📌 Notes
+## Notes
 
-- Only closing trades (`Closed PnL != 0`) are used for win rate and PnL analysis — ~104,000 of 211,000 rows
-- Trader correlation analysis (Cell 11) uses a minimum of **5 active days** given the dataset has only 32 unique traders
-- Timestamps are in IST; date matching with the Fear/Greed index (UTC dates) may have minor off-by-one effects on late-night trades
-
----
-
-## 🗂️ Data Sources
-
-- Fear & Greed Index: [alternative.me](https://alternative.me/crypto/fear-and-greed-index/)
-- Trader Data: [Hyperliquid](https://hyperliquid.xyz/) via provided dataset
+- Trades with `closed_pnl == 0` are excluded from win rate, PnL distribution, and correlation analysis (they represent open or fee-only records)
+- Fear & Greed data goes back to 2018 but trades only start May 2023 — unmatched dates are dropped
+- Per-trader correlation requires ≥ 30 active trading days to qualify
+- PnL in Cell 7 is clipped to ±500 USD for visualisation clarity only; raw values are used in all statistical calculations
